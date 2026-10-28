@@ -4,7 +4,7 @@
 
 **本次已在一台 RD03v2 实机完成 NAND 安装，校验得到 `rootfs_type=overlay`；OpenClash 已运行，DNS 排错后用户确认访问明显变快。** 这是单台设备记录，不代表所有硬件、版本或 iOS 中断情形都已验证。
 
-默认使用 **`ish-support` 分支**：本仓库的 iPhone iSH 适配和下列中文教程均在这个分支。固件请到 Releases 下载，不按分支选择固件。
+默认使用 **`main` 分支**：本仓库的 iPhone iSH 适配和下列中文教程均在这个分支。固件请到 Releases 下载，不按分支选择固件。
 
 ## 从这里开始
 

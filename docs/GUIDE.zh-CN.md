@@ -20,7 +20,7 @@
 ```sh
 apk add python3 openssh-client sshpass openssl ca-certificates curl unzip git
 cd /root
-git clone --branch ish-support https://github.com/zwthys-cyber/ax3000t-ish-client.git
+git clone --branch main https://github.com/zwthys-cyber/ax3000t-ish-client.git
 cd /root/ax3000t-ish-client
 ```
 
