@@ -17,6 +17,10 @@
 
 型号、NAND、kernel ABI 和用户态库版本都参与兼容性判断；这个表不是其他机器的通用安装保证。
 
+## 固件原版镜像
+
+本次使用的 v2.0.2 上游原始镜像、配套软件包、支持表、构建元数据和 SHA-256 已另行收录到[固件发布页](https://github.com/zwthys-cyber/ax3000t-ish-client/releases/tag/firmware-v2.0.2-upstream-mirror)，文件名、签名与上游摘要保持不变。该发布包含中文文件用途与固定源码链接；不是预装 OpenClash 的自定义固件。安装器仍使用上游发行元数据及校验逻辑，本次没有改动下载或刷写代码。
+
 ## 自编译 dnsmasq 补丁附件
 
 Release 包含 `dnsmasq-full-2.93-r4-rd03v2-nftset.apk`、`RD03v2-dnsmasq-nftset-source.tar.gz`、`RD03v2-dnsmasq-build-notes.md` 与 `SHA256SUMS`。

@@ -4,6 +4,8 @@
 
 **本次已在一台 RD03v2 实机完成 NAND 安装，校验得到 `rootfs_type=overlay`；OpenClash 已运行，DNS 排错后用户确认访问明显变快。** 这是单台设备记录，不代表所有硬件、版本或 iOS 中断情形都已验证。
 
+默认使用 **`ish-support` 分支**：本仓库的 iPhone iSH 适配和下列中文教程均在这个分支。固件请到 Releases 下载，不按分支选择固件。
+
 ## 从这里开始
 
 | 需要做什么 | 文档 |
@@ -13,6 +15,7 @@
 | 查询本次版本、补丁包来源和哈希 | [版本与补丁包](docs/ARTIFACTS.zh-CN.md) |
 | 理解 iSH 的网络、续接与验证边界 | [iSH 使用与验证说明](README-ISH.zh-CN.md) |
 | 看脱敏的实机结果 | [实机验证记录](docs/HARDWARE-VALIDATION.zh-CN.md) |
+| 下载本次使用的 v2.0.2 原版固件 | [固件下载镜像](https://github.com/zwthys-cyber/ax3000t-ish-client/releases/tag/firmware-v2.0.2-upstream-mirror) |
 | 下载客户端与本次 dnsmasq 补丁附件 | [Releases](https://github.com/zwthys-cyber/ax3000t-ish-client/releases) |
 
 ## 适用设备与来源
