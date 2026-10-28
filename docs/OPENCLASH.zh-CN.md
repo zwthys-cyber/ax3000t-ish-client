@@ -40,7 +40,7 @@ apk add bash curl ca-bundle ip-full ruby ruby-yaml \
   kmod-tun kmod-inet-diag unzip kmod-nft-tproxy luci-compat luci luci-base
 ```
 
-这只证明本次源状态能解析依赖。未来源若不匹配，应使用固件维护者提供的匹配包或匹配 SDK 重建，不能仅凭 `6.18.55` 数字相同认定所有 kmod 兼容。
+这只证明本次源状态能解析依赖。未来的软件源若不匹配，应使用固件维护者提供的匹配包或匹配 SDK 重建，不能仅凭 `6.18.55` 数字相同认定所有 kmod 兼容。
 
 ## 3. dnsmasq-full 冲突如何处理
 
@@ -218,6 +218,9 @@ GOMEMLIMIT=24MiB GOGC=20 /etc/openclash/core/clash_meta -v
 本次输出正确 Mihomo 版本。这里的 Go 环境变量**只作用于这一条 `-v` 检查，不代表 OpenClash 服务已持久设置内存上限，也不是进程硬性内存限制**。本次服务实际运行 RSS 约 24 MiB，但配置规则、连接与数据库都会影响占用。避免后续自动更新把已解包文件换回压缩内核；需要更新时重新核对来源、空间及运行结果。
 
 ## 7. 导入自己的 Mihomo 配置
+
+可参考[脱敏的配置结构模板](../examples/mihomo.example.yaml)。模板含 `REPLACE_*` 占位符，
+必须替换为自己的服务端参数；这里只验证 YAML 结构，没有将占位模板当作可连接的实机配置。
 
 在 OpenClash“添加配置”或“配置管理”上传 `.yaml`，例如 `hk.yaml`。本次配置由自己的 sing-box VPS 面板导出，包含 VLESS Reality、VMess、Hysteria2、TUIC、AnyTLS；必须使用 **Mihomo/Clash 格式**，不能把 sing-box JSON 直接上传。
 

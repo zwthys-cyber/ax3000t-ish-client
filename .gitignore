@@ -19,3 +19,18 @@ images/
 
 __pycache__/
 *.pyc
+
+# Private iSH installation state and diagnostic/configuration exports.
+ish-live/
+**/resume.json
+**/firstboot.tar.gz
+*.key
+*.pem
+.env
+.env.*
+*-before-*.conf
+*.pcap
+*.pcapng
+private-*.yaml
+private-*.yml
+hk.yaml

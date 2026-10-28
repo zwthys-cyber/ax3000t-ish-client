@@ -9,7 +9,8 @@
 基础项目：ADCDS/xiaomi-openwrt-install，固定提交
 `2ca24a165a54f11af98cdea1ba8f4fef69c97ec1`。
 本仓库的 iSH 后端、只读预检、续接记录与相关测试为实验适配，尚未合入上游。
-原始 LICENSE、NOTICE 保留。固件由上游 release.py 下载验证，本包不包含固件镜像。
+原始 LICENSE、NOTICE 保留。固件由上游 release.py 下载验证，客户端 ZIP 不包含固件镜像。
+本仓库另有[固件原版镜像 Release](https://github.com/zwthys-cyber/ax3000t-ish-client/releases/tag/firmware-v2.0.2-upstream-mirror)，与客户端附件分开。
 
 ## 先在手机做只读预检
 

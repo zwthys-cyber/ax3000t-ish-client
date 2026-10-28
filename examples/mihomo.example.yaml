@@ -1,0 +1,70 @@
+# 结构示例：所有 REPLACE_* 项都必须替换，不能直接启动。
+# 使用你自己的合法节点参数；不要把填好后的文件提交到 GitHub。
+# OpenClash 会覆盖部分 DNS 字段，还需检查 enable_respect_rules。
+port: 7890
+allow-lan: true
+mode: rule
+log-level: info
+unified-delay: true
+
+dns:
+  enable: true
+  listen: '0.0.0.0:1053'
+  ipv6: true
+  enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.1/16
+  respect-rules: true
+  use-system-hosts: false
+  default-nameserver:
+    - 223.5.5.5
+    - 119.29.29.29
+  nameserver:
+    - https://1.1.1.1/dns-query
+    - https://8.8.8.8/dns-query
+  proxy-server-nameserver:
+    - https://223.5.5.5/dns-query
+    - https://doh.pub/dns-query
+  fake-ip-filter:
+    - '+.lan'
+    - '+.local'
+    - '+.in-addr.arpa'
+    - '+.ip6.arpa'
+    - '+.msftconnecttest.com'
+    - '+.msftncsi.com'
+    - 'time.*.com'
+    - 'pool.ntp.org'
+
+proxies:
+  - name: 我的节点
+    type: vless
+    server: proxy.example.com
+    port: 443
+    uuid: REPLACE_WITH_YOUR_UUID
+    network: tcp
+    udp: true
+    tls: true
+    flow: xtls-rprx-vision
+    servername: REPLACE_WITH_YOUR_SERVER_NAME
+    client-fingerprint: chrome
+    reality-opts:
+      public-key: REPLACE_WITH_YOUR_REALITY_PUBLIC_KEY
+      short-id: REPLACE_WITH_YOUR_SHORT_ID
+
+proxy-groups:
+  - name: 选择代理
+    type: select
+    proxies:
+      - 我的节点
+      - DIRECT
+
+rules:
+  - IP-CIDR,127.0.0.0/8,DIRECT,no-resolve
+  - IP-CIDR,10.0.0.0/8,DIRECT,no-resolve
+  - IP-CIDR,172.16.0.0/12,DIRECT,no-resolve
+  - IP-CIDR,192.168.0.0/16,DIRECT,no-resolve
+  - IP-CIDR6,::1/128,DIRECT,no-resolve
+  - IP-CIDR6,fc00::/7,DIRECT,no-resolve
+  - IP-CIDR6,fe80::/10,DIRECT,no-resolve
+  # GEOIP 规则需要匹配的地理数据库；缺少数据库时先处理日志中的提示。
+  - GEOIP,CN,DIRECT
+  - MATCH,选择代理

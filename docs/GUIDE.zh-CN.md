@@ -36,6 +36,9 @@ python3 install.py standard --release v2.0.2 --network-backend ish --interface i
 
 ## 2. 只读手机预检
 
+本仓库的 `ish_preflight.py` 当前明确要求原厂版本 **2.0.28**；这是代码中的检查条件。
+其他原厂版本不能只凭同型号就跳过失败继续。是否支持及初始化约束以安装器的对应版本说明为准。
+
 查看 iPhone 设置 → Wi-Fi → 当前网络右侧 ⓘ 的 IPv6 路由器地址。iSH 访问 link-local 地址需要原生数字 scope，必须通过当前设备验证取得；不能照抄别人日志里的 `%24`，换网络后也可能变化。
 
 把下面的 `fe80::1%24` 替换成**你已确认的地址和数字 scope**后运行：

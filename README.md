@@ -14,6 +14,9 @@
 | 安装 OpenClash、处理依赖和低内存 | [OpenClash 安装与排错](docs/OPENCLASH.zh-CN.md) |
 | 查询本次版本、补丁包来源和哈希 | [版本与补丁包](docs/ARTIFACTS.zh-CN.md) |
 | 理解 iSH 的网络、续接与验证边界 | [iSH 使用与验证说明](README-ISH.zh-CN.md) |
+| 选分支/下载、密码、备份与常见问题 | [常见问题速查](docs/FAQ.zh-CN.md) |
+| 配置结构参考（需要填自己的节点参数） | [Mihomo 示例](examples/mihomo.example.yaml) |
+| 查看这次仓库更新 | [更新记录](docs/CHANGELOG.zh-CN.md) |
 | 看脱敏的实机结果 | [实机验证记录](docs/HARDWARE-VALIDATION.zh-CN.md) |
 | 下载本次使用的 v2.0.2 原版固件 | [固件下载镜像](https://github.com/zwthys-cyber/ax3000t-ish-client/releases/tag/firmware-v2.0.2-upstream-mirror) |
 | 下载客户端与本次 dnsmasq 补丁附件 | [Releases](https://github.com/zwthys-cyber/ax3000t-ish-client/releases) |
