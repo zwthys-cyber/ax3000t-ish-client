@@ -91,6 +91,4 @@ v0.1.1 起，固件分成每段 2 MiB 下载。短暂网络错误会保留 `.par
 python3 -m unittest -q test_download_resume test_ish_network test_ish_backend
 ```
 
-工具基于 [ADCDS/xiaomi-openwrt-install](https://github.com/ADCDS/xiaomi-openwrt-install) 的 `2ca24a165a54f11af98cdea1ba8f4fef69c97ec1` 提交。iSH 相关改动尚未合入原作者项目。原始 LICENSE 和 NOTICE 保留。
-
-开发者补充：固定来源的固件设备描述文件用 ART 偏移 6 处的数据设置 LAN MAC，见[该版本源码](https://github.com/ADCDS/openwrt/blob/900aedbd99676c884b09d3138ddc98cf7cd839d0/target/linux/qualcommax/dts/ipq5018-mi-router-ax3000t-v2.dts)。这仅用于生成候选地址，不保证以后所有固件的地址都一样。
+本项目的基础代码、固定版本、许可证及设备地址的技术来源集中在[软件来源说明](docs/SOURCES.zh-CN.md)。操作时以本仓库的手机教程和实际检查结果为准。

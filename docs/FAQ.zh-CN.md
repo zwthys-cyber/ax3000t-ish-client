@@ -12,7 +12,7 @@ Release 就是下载发布页，Assets 是里面的附件列表。按照用途�
 
 | 需要的内容 | 入口 |
 | --- | --- |
-| 本次使用的 v2.0.2 固件、配套包与上游校验文件 | [固件原版镜像](https://github.com/zwthys-cyber/ax3000t-ish-client/releases/tag/firmware-v2.0.2-upstream-mirror) |
+| 本次使用的 v2.0.2 固件、配套包和文件校验值 | [固件原版镜像](https://github.com/zwthys-cyber/ax3000t-ish-client/releases/tag/firmware-v2.0.2-upstream-mirror) |
 | 更新后的中文教程和 iSH 客户端压缩包 `ax3000t-ish-client.zip` | [教程与客户端](https://github.com/zwthys-cyber/ax3000t-ish-client/releases/tag/rd03v2-guide-20261028) |
 | 自编译 dnsmasq-full APK、完整对应源码和构建说明 | [同一教程发布的附件](https://github.com/zwthys-cyber/ax3000t-ish-client/releases/tag/rd03v2-guide-20261028) |
 
@@ -30,7 +30,7 @@ cd /root/ax3000t-ish-client
 
 **镜像自带 OpenClash 吗？** 不带。镜像是 ADCDS v2.0.2 原始文件，中文包、OpenClash、dnsmasq 补丁和私人节点配置是安装后的操作。教程没有把设备备份当作“固件”公开。
 
-**只刷一个 sysupgrade.bin 就行吗？** 从原厂系统开始刷机时不能这样操作。工具要先取得管理员权限、备份，利用空闲存储位置启动临时系统，再核对设备并写入正式系统。已安装 OpenWrt 的后续升级也遵循[上游该版本 RAM 升级说明](https://github.com/ADCDS/openwrt-xiaomi-ax3000t-rd03v2/blob/v2.0.2/docs/no-uart-reflash.md)，不从普通运行系统盲目强刷。
+**只刷一个 sysupgrade.bin 就行吗？** 从原厂系统开始刷机时不能这样操作。工具要先取得管理员权限、备份，利用空闲存储位置启动临时系统，再核对设备并写入正式系统。已安装 OpenWrt 的后续升级也遵循[该固件版本的升级说明](https://github.com/ADCDS/openwrt-xiaomi-ax3000t-rd03v2/blob/v2.0.2/docs/no-uart-reflash.md)，不从普通运行系统盲目强刷。
 
 ## 密码与 Wi-Fi
 
@@ -40,7 +40,7 @@ cd /root/ax3000t-ish-client
 
 **Wi-Fi 密码 6 位可以吗？** 本安装器使用 WPA2，要求 8～63 个可打印 ASCII 字符。root 密码长度与这个限制不是同一个概念。
 
-**为什么管理页面换成 192.168.10.1？** 本次 WAN 在 `192.168.1.0/24`，LAN 原来也是同一网段，故将 LAN 改到 `192.168.10.0/24`。不要不看上游网段就照改；改 LAN 后需要手机重新获取地址。
+**为什么管理页面换成 192.168.10.1？** 本次 WAN 在 `192.168.1.0/24`，LAN 原来也是同一网段，故将 LAN 改到 `192.168.10.0/24`。不要不看上一级路由器的网段就照改；改 LAN 后需要手机重新获取地址。
 
 ## 实际排错
 
@@ -65,3 +65,7 @@ cd /root/ax3000t-ish-client
 - 电脑或其他可访问路由器的可信设备可以用 SCP 接收文件；仅有 iPhone 时优先使用 LuCI 下载与 iSH 文件导出。保存后检查文件存在、大小合理，关键文件保留 SHA-256。
 
 仓库增加了常见私有运行产物的 `.gitignore` 规则，但它无法撤销已经提交的秘密。提交前检查 `git status` 和 `git diff --cached`；分享诊断输出时只保留必要错误，不分享真实密码或完整续接记录。
+
+## 仓库独立后，为什么还有其他项目的名称？
+
+本仓库已经独立维护，页面不再显示 Fork 关系。刷机工具、固件和插件有各自的软件来源，集中记录在[软件来源说明](SOURCES.zh-CN.md)里。固件下载和必要的代码引用也会保留，不能为了改页面名称让工具无法下载或核对文件。

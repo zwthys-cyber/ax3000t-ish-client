@@ -37,22 +37,20 @@
 - 操作会更换路由器系统。先读 [操作说明与风险提示](NOTICE)，保存好自己的备份，保持供电，不跳过工具的型号和文件检查。
 - 手机上断线不一定意味着刷机失败。已经开始写入后，先按教程检查结果，不要立即再刷一遍。
 
-## 软件来自哪里？
+## 版本与来源
 
-固件来自 [ADCDS 的 AX3000T RD03v2 项目](https://github.com/ADCDS/openwrt-xiaomi-ax3000t-rd03v2)，本仓库下载页保存的是 **v2.0.2 原始文件**，没有加进个人密码或节点配置。
+本次使用 OpenWrt v2.0.2 和 OpenClash v0.48.002。固件下载页保存的是原版文件；iPhone 上的刷机适配、中文教程和本次操作记录在这里维护。
 
-刷机工具基于 [ADCDS/xiaomi-openwrt-install](https://github.com/ADCDS/xiaomi-openwrt-install)，增加了在 iPhone iSH 上运行、换 Wi-Fi 后重新连接和检查安装结果的功能。OpenClash 来自 [vernesong/OpenClash](https://github.com/vernesong/OpenClash)，本次使用 **v0.48.002**。
-
-本仓库的重点是手机刷机工具和中文教程。更详细的硬件、软件版本和源码来源放在[版本说明](docs/ARTIFACTS.zh-CN.md)。
+软件的基础项目、完整源码和许可证集中放在[软件来源说明](docs/SOURCES.zh-CN.md)，需要检查来源时可以查看。
 
 ## 给需要核对技术细节的人
 
 本次路由器的闪存型号为 ESMT F50D1G41LB，`flash_type=0x11`。刷机工具保留了型号、闪存支持、原设备信息和文件完整性检查。安装完成后，工具确认运行的是已写入路由器的系统，而不只是临时系统。
 
-此前已通过 50 项适配与断线恢复模拟测试；原作者的软件检查为 259 通过、0 失败、1 跳过。Alpine 3.14 x86 / Python 3.9.16 / OpenSSH 8.6p1 环境也通过了适配测试。详细结果见 [ISH_VALIDATION.json](ISH_VALIDATION.json)。软件模拟通过不代表所有手机中断、断电或恢复原厂的情况都已在真机上试过。
+此前已通过 50 项适配与断线恢复模拟测试；基础安装器的软件检查为 259 通过、0 失败、1 跳过。Alpine 3.14 x86 / Python 3.9.16 / OpenSSH 8.6p1 环境也通过了适配测试。详细结果见 [ISH_VALIDATION.json](ISH_VALIDATION.json)。软件模拟通过不代表所有手机中断、断电或恢复原厂的情况都已在真机上试过。
 
 ```sh
 python3 -m unittest -q test_download_resume test_ish_network test_ish_backend
 ```
 
-原作者的[项目说明](README.upstream.md)、[技术文档](docs/technical.md)、[NOTICE](NOTICE) 与 [GPL-2.0 许可证](LICENSE) 保留。`revert.py` / `restore.py` 在 iPhone 上恢复原厂系统的流程尚未完成实际验证。
+程序工作方式见[技术说明](docs/technical.md)，软件来源与署名见[来源说明](docs/SOURCES.zh-CN.md)。[NOTICE](NOTICE) 与 [GPL-2.0 许可证](LICENSE) 保留。`revert.py` / `restore.py` 在 iPhone 上恢复原厂系统的流程尚未完成实际验证。
