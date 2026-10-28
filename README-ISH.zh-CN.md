@@ -1,7 +1,10 @@
 # AX3000T RD03v2：iPhone iSH 实验适配
 
-这是客户端源代码验证包。完整安装路径已经接入 iSH 后端，但没有在 iPhone 上完成从原厂到
-OpenWrt 的端到端刷写。现在只执行下面的只读预检，不重置、不触发漏洞、不启动刷机。
+2026-10-28 更新：已在一台 RD03v2（ESMT F50D1G41LB，v2.0.2）上通过 iPhone iSH 完成
+原厂 root 回连、备份、RAM pivot、NAND 安装与永久系统校验。
+
+完整操作见 [中文实战教程](docs/GUIDE.zh-CN.md)，后续见 [OpenClash 安装与排错](docs/OPENCLASH.zh-CN.md)。
+下文保留只读预检与适配机制说明；单台成功不等于所有中断/恢复情形已验证。
 
 基础项目：ADCDS/xiaomi-openwrt-install，固定提交
 `2ca24a165a54f11af98cdea1ba8f4fef69c97ec1`。
@@ -30,7 +33,7 @@ python3 ish_preflight.py --runtime --stock-ipv6 'fe80::1%24'
 
 `flash_ready: false` 是预期结果：预检通过不等于完成刷写验证。
 如本地 fsync/权限检查失败则停止，不能忽略失败后继续刷。
-把检查结果发回后再决定下一项验证。当前不要执行 install.py 的实际安装入口。
+预检失败应先定位原因；通过后按完整教程进入实际安装，不能跳过镜像、设备身份与 NAND 检查。
 `install.py --stage preflight` 会取得 root 并修改原厂配置，不能将它当作只读预检。
 
 ## 已实现的安装协调流程
@@ -65,7 +68,7 @@ https://github.com/ADCDS/openwrt/blob/900aedbd99676c884b09d3138ddc98cf7cd839d0/t
 - `flash-started` / `flash-complete`：iSH 默认续接改为只读验证，绝不再次启动 sysupgrade。
   “已开始”记录写在确认设备启动标记后、向设备发送写入 ack 之前，结果不确定也只做检查。
 
-后续实际验证时的续接入口形式为：
+实际安装的续接入口形式为：
 
 ```sh
 python3 install.py --resume-manifest /实际安装目录/resume.json
@@ -73,7 +76,7 @@ python3 install.py --resume-manifest /实际安装目录/resume.json
 
 这只说明阶段分派规则，不是恢复成功保证；无法连通或身份不符会停止。
 revert.py / restore.py 尚未适配 iSH，此包不宣称支持在 iPhone 上恢复原厂。
-原厂漏洞仍有上游的出厂状态/初始化约束；本次预检不要求重置，当前也不要重置。
+原厂漏洞仍有上游的出厂状态/初始化约束；只读预检本身不要求重置，不要为预检执行重置。
 
 ## 软件验证范围
 
@@ -85,9 +88,9 @@ revert.py / restore.py 尚未适配 iSH，此包不宣称支持在 iPhone 上恢
 同一 Alpine 环境中实际运行 iSH 模式的 `--dry-run`，成功下载并验证 v2.0.2 的三个镜像，
 且校验 UBI 包含对应 ITB。dry-run 不联系路由器。宿主机 chroot 不模拟 iOS 权限和暂停行为。
 
-用户手机已经实测：Python 安装、IPv4 管理访问和本地监听、IPv6 单播 HTTP、两个地址的
-设备标识一致。尚未实测：新预检的文件持久化、OpenSSH 的实际设备连接、路由器向手机
-回连、RAM 启动与永久系统的完整安装。不能把软件测试通过称为手机刷机成功。
+用户手机先前已验证 Python、IPv4/IPv6 管理访问、监听及状态持久化；本次进一步观察到
+原厂 root 回连、镜像校验与写入回读、RAM SSH、永久系统 overlay 和 ART 指纹校验。
+详见 [实机记录](docs/HARDWARE-VALIDATION.zh-CN.md)。iOS 暂停/恢复与 iSH 原厂恢复仍未完整验证。
 
 本机测试入口：
 
@@ -103,4 +106,4 @@ Content-Range 的起止位置和总长度必须吻合；完整长度与可信 SH
 没有可信摘要的旧辅助资产仍使用完整下载；不允许凭文件大小跳过固件哈希验证。
 
 手机已通过 v0.1.0 的 41 项测试和只读运行环境/状态持久化检查。新增的 9 项真实本地 HTTP
-下载测试在宿主机和匹配的旧版 Alpine 环境通过，新下载器尚需手机 dry-run 验证。
+下载测试在宿主机和匹配的旧版 Alpine 环境通过，本次实际安装已使用并通过固件下载与 SHA-256 校验；没有证明所有网络故障下的续传情形都经过手机实测。

@@ -1,5 +1,5 @@
 {
-  "status": "experimental-client; phone end-to-end installation not verified",
+  "status": "single-device iPhone iSH NAND installation verified; broader recovery and suspension unverified",
   "upstream": "https://github.com/ADCDS/xiaomi-openwrt-install",
   "upstream_commit": "2ca24a165a54f11af98cdea1ba8f4fef69c97ec1",
   "software_tests": {
@@ -39,16 +39,20 @@
     "IPv6 unicast HTTP with numeric scope",
     "IPv4 and IPv6 stock IDs match",
     "v0.1.0 read-only runtime and atomic resume storage",
-    "v0.1.0 adapter model tests: 41 passed on iSH"
+    "v0.1.0 adapter model tests: 41 passed on iSH",
+    "2026-10-28 firmware download and SHA-256 verification during the reported installation",
+    "router-to-phone root callback and stock backups",
+    "idle-slot RAM pivot with byte-for-byte UBI volume readback",
+    "SSH to RAM system: board, tmpfs and original ART matched",
+    "permanent NAND installation verified with --verify-only: board, overlay and original ART matched"
   ],
   "phone_not_verified": [
-    "new ranged downloader on iSH; previous full-stream downloads truncated twice",
-    "SSH to RAM system",
-    "router-to-phone root callback",
-    "real NAND installation",
-    "iOS suspension/resume during install"
+    "exhaustive ranged-download fault scenarios on iSH",
+    "iOS suspension/resume across every install phase",
+    "iSH vendor firmware restore/revert",
+    "other devices and NAND variants beyond this single unit"
   ],
-  "current_phone_step": "update release.py and rerun the pinned v2.0.2 dry-run; no router writes",
+  "current_phone_step": "installation complete; OpenClash and DNS routing verified on the reported device",
   "client_version": "ish-client-v0.1.1",
   "real_range_download": {
     "environment": "matching Alpine 3.14 x86 chroot, Python 3.9.16; not actual iSH",
@@ -57,5 +61,20 @@
     "bytes": 17432576,
     "sha256": "dfae1071e315497244f713074598d51e1f0f8e5b28c4183004d76cb4cad3c85f",
     "verified": true
+  },
+  "hardware_session": {
+    "date": "2026-10-28",
+    "device": "RD03v2",
+    "nand": "ESMT F50D1G41LB",
+    "flash_type": "0x11",
+    "firmware_release": "v2.0.2",
+    "openwrt_revision": "r0+37778-bc808b8504",
+    "board": "xiaomi,mi-router-ax3000t-v2",
+    "permanent_rootfs_type": "overlay",
+    "art_fingerprint_matched": true,
+    "verification_after_authentication_retry": true,
+    "sensitive_identifiers_omitted": true,
+    "evidence": "docs/HARDWARE-VALIDATION.zh-CN.md",
+    "scope": "one reported device; no universal hardware or recovery guarantee"
   }
 }
