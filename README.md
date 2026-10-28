@@ -1,189 +1,46 @@
-# xiaomi-openwrt-install
+# AX3000T RD03v2 iPhone iSH client
 
-Install OpenWrt on a supported Xiaomi router without UART or soldering, or
-return an installed router to an approved stock image.
+实验性的 iPhone iSH 安装客户端，基于
+[ADCDS/xiaomi-openwrt-install](https://github.com/ADCDS/xiaomi-openwrt-install)
+提交 `2ca24a165a54f11af98cdea1ba8f4fef69c97ec1`。
 
-The installer uses the [documented `cab_meshd` exploit chain](https://github.com/ADCDS/xiaomi-ax3000t-cabmeshd-disclosure#combined-v1--v2-capuci-exploit) to obtain root,
-checks the exact board, NAND and partition layout, downloads the OpenWrt images
-selected by the device profile, boots the RAM installer, and writes the
-permanent image.
+已接入 iSH 的 socket 网络后端和断线续接，保留板型、分区、NAND、备份与镜像校验。
+**尚未在 iPhone 上完成从原厂到 OpenWrt 的端到端刷写，当前只进行只读预检。**
 
-> Read [NOTICE](NOTICE) before continuing. Run this only on a router you own.
+请先阅读 [中文 iSH 使用与验证说明](README-ISH.zh-CN.md)。
+下载客户端请到 [Releases](https://github.com/zwthys-cyber/ax3000t-ish-client/releases)。
+发布附件是客户端源码验证包，不包含固件。
 
-## Before starting
+## 当前可执行的手机步骤
 
-You need a Linux computer with Python 3.9 or newer:
-
-```sh
-sudo apt install sshpass openssl
-```
-
-Factory-reset the router and leave it at Xiaomi's setup wizard. **Do not finish
-the web wizard.** Connect the computer to a LAN port or to the router's open
-factory Wi-Fi network. Keep the router on stable power.
-
-Use an isolated link. If using factory Wi-Fi, ensure no other client is joined.
-The temporary root callback uses a per-run token and peer checks, while the
-stock firmware cannot provide an authenticated encrypted channel for this
-exploit stage.
-
-Clone this repository:
+在 iSH 前台安装依赖：
 
 ```sh
-git clone https://github.com/ADCDS/xiaomi-openwrt-install.git
-cd xiaomi-openwrt-install
+apk add python3 openssh-client sshpass openssl ca-certificates curl unzip
 ```
 
-## Install OpenWrt
+下载并解压 release 客户端后，先运行以下只读预检。将示例地址替换为手机实际验证的
+原厂路由器 IPv6 link-local 地址与数字接口编号：
 
 ```sh
-python3 install.py
+python3 ish_preflight.py --runtime --stock-ipv6 'fe80::1%24'
 ```
 
-This installs the latest release of the
-[RD03v2 port](https://github.com/ADCDS/openwrt-xiaomi-ax3000t-rd03v2), with NSS hardware
-offload. For an image without NSS offload, install the port's last v1.x standard
-build instead: `python3 install.py standard --release v1.14`.
+该预检只读取路由器信息，并在手机创建、测试、清除临时状态文件。
+`flash_ready: false` 是预期输出，预检通过不等于刷写验证通过。
+`install.py --stage preflight` 会取得 root 并修改原厂配置，不能用作只读检测。
 
-By default, the installer selects the latest published release from the device
-profile's firmware repository, excluding drafts and prereleases. It downloads
-and verifies the matching RAM and permanent images, detects whether the router
-is connected by Ethernet or Wi-Fi, backs up device-specific partitions, and asks
-before each irreversible write. New firmware releases become the default
-automatically.
+## 软件验证
 
-Override connection detection with `--transport wired` or `--transport wifi`.
-If route-based interface detection fails, append `--interface INTERFACE_NAME`.
+- 41 项适配和中断恢复测试通过；在 Alpine 3.14 x86 / Python 3.9.16 / OpenSSH 8.6p1 上也通过。
+- 上游 selftest：259 通过、0 失败、1 跳过（缺少原厂镜像输入）。
+- 同一旧版 Alpine 环境完成了 iSH 模式真实 dry-run，下载并校验 v2.0.2 的三个镜像及 UBI/ITB 对应关系；未接触路由器。
 
-During a Wi-Fi install, the router temporarily reboots into a RAM installer
-network. `install.py` prints its SSID and password before the reboot and waits
-while you join it. By default, final verification uses that same Wi-Fi
-interface, so before doing anything to the router the installer requires the
-SSID, passphrase, and country code for the permanent system. An interactive run
-prompts for missing values; automation must pass `--wifi-ssid`, `--wifi-key`,
-and `--wifi-country`. After `sysupgrade` makes the temporary network disappear,
-join that permanent SSID. The installer never prints its passphrase.
-
-To keep permanent Wi-Fi disabled, select an Ethernet interface for the final
-check and connect it when the installer asks:
+详情见 [ISH_VALIDATION.json](ISH_VALIDATION.json)。Alpine chroot 测试不等于 iOS 或 iSH 实机测试。
 
 ```sh
-python3 install.py --transport wifi --interface WIFI_INTERFACE \
-    --verify-interface ETHERNET_INTERFACE
+python3 -m unittest -q test_ish_network test_ish_backend
 ```
 
-Both paths rediscover the router and verify the board, persistent overlay, and
-partition sizes.
-
-The temporary credentials are fixed and public, and root has no password in
-the RAM system. Keep the link isolated until the permanent system has booted.
-
-When final verification is over Ethernet, omitting configuration arguments
-leaves OpenWrt Wi-Fi disabled and the root password unset. Configure both
-interactively during installation with:
-
-```sh
-python3 install.py --configure
-```
-
-Download and fully verify the latest release's image set without contacting a
-router:
-
-```sh
-python3 install.py --dry-run
-```
-
-Use `--release TAG` to select a particular release. `--release latest` explicitly
-selects the default behavior. Each installation records the resolved tag and
-image hashes in its private resume manifest, so continuing an interrupted run
-keeps the original release even if a newer one has been published.
-
-Offline installs require an explicit tag and its verified cached images:
-
-```sh
-python3 install.py --release v2.0.0 --dry-run
-python3 install.py --release v2.0.0 --offline
-```
-
-If GitHub is unavailable, an explicitly selected tag can also use its verified
-cache. Selecting `latest` requires GitHub access.
-
-If the connection is lost after `sysupgrade` starts, do not repeat the flash
-stage. Use the private manifest printed by the original run to perform only
-the final checks, optionally over a different interface:
-
-```sh
-python3 install.py --verify-only /path/to/resume.json \
-    --verify-interface INTERFACE_NAME
-```
-
-## Return to stock
-
-Download an official stock image whose SHA-256 is approved by the selected
-device profile. The [technical reference](docs/technical.md#getting-the-images)
-lists the approved images for the enabled profiles.
-
-From an installed OpenWrt system, run:
-
-```sh
-nmcli device status
-IFACE=YOUR_ROUTER_INTERFACE
-python3 revert.py --device rd03v2 /path/to/approved-stock-image.bin \
-    --interface "$IFACE"
-```
-
-`revert.py` verifies the stock image, downloads and verifies the profile's RAM
-image pair, pivots the router into RAM, restores stock, and confirms that the
-setup wizard returns. It infers Ethernet or Wi-Fi from the selected interface.
-The RAM images default to the latest published release; use `--release TAG` to
-select a specific release, and add `--offline` to use its verified cache.
-During a Wi-Fi revert, join the temporary RAM network when `revert.py` prints
-its SSID and password. The useful overrides are:
-
-```sh
-python3 revert.py --device rd03v2 /path/to/approved-stock-image.bin \
-    --transport wired --interface "$IFACE"
-
-python3 revert.py --device rd03v2 /path/to/approved-stock-image.bin \
-    --interface "$IFACE" --root-password 'YOUR_OPENWRT_PASSWORD'
-
-python3 revert.py --device rd03v2 /path/to/approved-stock-image.bin \
-    --interface "$IFACE" --dry-run
-```
-
-Use `revert.py` for normal restoration. `restore.py` is the lower-level writer
-and refuses to run unless the router is already booted from a RAM initramfs.
-
-## Supporting tools
-
-| Command | Purpose |
-|---|---|
-| `python3 release.py --device rd03v2` | Inspect the latest release and its required assets. |
-| `python3 release.py --device rd03v2 --download --wifi --dest images` | Download and verify a release image set. |
-| `python3 probe.py --device rd03v2` | Collect hardware and flash-layout evidence without raw firmware-partition writes. It initializes or reboots stock as needed, modifies stock control state, and consumes the one-shot trigger. |
-| `python3 attach.py --bind OPERATOR_ADDRESS --peer ROUTER_ADDRESS --session-token TOKEN 'id'` | Reattach to the authenticated callback from an interrupted run. |
-| `python3 restore.py --device rd03v2 /path/to/approved-stock-image.bin --discover INTERFACE_NAME` | Run the low-level stock writer from an already-booted RAM system. |
-| `python3 ubiparse.py /path/to/ubi-dump.bin` | Inspect a raw UBI dump offline. |
-| `python3 selftest.py` | Run checks that do not require a router. |
-
-See the [technical reference](docs/technical.md) for interrupted runs, manual
-stages, stock-image hashes, flash-layout details, and recovery procedures.
-
-## Supported device
-
-| Profile | Hardware | Install source | Return to stock |
-|---|---|---|---|
-| `rd03v2` | Xiaomi AX3000T RD03v2, Qualcomm IPQ5018 | Stock 2.0.28 and 2.0.12, hardware-tested | 2.0.28 and 2.0.12 hardware-tested |
-
-The exact tested stock ROMs, release source, NAND support, layouts, and accepted
-stock-image hashes live in [`devices.py`](devices.py). Other Xiaomi models may
-contain the same vulnerabilities, but their flash and boot layouts are not
-interchangeable. The installer rejects every model without a reviewed and
-hardware-tested profile.
-
-Technical details and the vulnerability disclosure are in
-[`xiaomi-ax3000t-cabmeshd-disclosure`](https://github.com/ADCDS/xiaomi-ax3000t-cabmeshd-disclosure).
-
-## License
-
-GPL-2.0-only. See [LICENSE](LICENSE).
+[上游 README](README.upstream.md)、[NOTICE](NOTICE) 与 [GPL-2.0 许可证](LICENSE) 保留。
+原厂恢复脚本 revert.py / restore.py 未适配 iSH。

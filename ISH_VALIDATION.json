@@ -1,0 +1,50 @@
+{
+  "status": "experimental-client; phone end-to-end installation not verified",
+  "upstream": "https://github.com/ADCDS/xiaomi-openwrt-install",
+  "upstream_commit": "2ca24a165a54f11af98cdea1ba8f4fef69c97ec1",
+  "software_tests": {
+    "adapter": {
+      "passed": 41,
+      "failed": 0
+    },
+    "upstream_selftest": {
+      "passed": 259,
+      "failed": 0,
+      "skipped": 1,
+      "skip_reason": "no XIAOMI_STOCK_IMAGE for stock image carve"
+    }
+  },
+  "compatibility_runtime": {
+    "environment": "Linux chroot, Alpine 3.14 x86, iSH repository snapshot v3.14-2023-05-19; not iOS or iSH emulation",
+    "python": "3.9.16",
+    "openssh": "8.6p1",
+    "openssl": "1.1.1t",
+    "adapter_tests_passed": 41
+  },
+  "real_dry_run": {
+    "backend": "ish",
+    "release": "v2.0.2",
+    "router_contacted": false,
+    "hashes_verified": true,
+    "ubi_itb_match_verified": true,
+    "assets": {
+      "openwrt-qualcommax-ipq50xx-xiaomi_mi-router-ax3000t-v2-initramfs-factory-wifi.ubi": "dfae1071e315497244f713074598d51e1f0f8e5b28c4183004d76cb4cad3c85f",
+      "openwrt-qualcommax-ipq50xx-xiaomi_mi-router-ax3000t-v2-squashfs-sysupgrade.bin": "2d716219be1334840ba4637d139e25fbabe407d965cde456d3d7cd2d77c18a7c",
+      "openwrt-qualcommax-ipq50xx-xiaomi_mi-router-ax3000t-v2-initramfs-uImage-wifi.itb": "9cc4ed177adf5cfc6711a8adc7a9fa482796e1ce459cc22371b4515c4e1a1492"
+    }
+  },
+  "phone_confirmed": [
+    "IPv4 stock management",
+    "local listener binds",
+    "IPv6 unicast HTTP with numeric scope",
+    "IPv4 and IPv6 stock IDs match"
+  ],
+  "phone_not_verified": [
+    "new client runtime and filesystem checks",
+    "SSH to RAM system",
+    "router-to-phone root callback",
+    "real NAND installation",
+    "iOS suspension/resume during install"
+  ],
+  "current_phone_step": "ish_preflight.py --runtime only; no reset or flashing"
+}
