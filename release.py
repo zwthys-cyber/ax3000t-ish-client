@@ -26,12 +26,14 @@ the version table below is only the fallback for releases predating it.
 """
 
 import hashlib
+import http.client
 import json
 import os
 import re
 import shutil
 import subprocess
 import sys
+import time
 import urllib.error
 import urllib.request
 
@@ -256,47 +258,106 @@ def expected_digest(rel, name, manifest_digest=None):
     return manifest_digest or github_digest
 
 
-def download(rel, name, destdir, progress=True):
-    """Fetch one asset, resuming nothing and trusting nothing -- the caller
-    verifies against sha256sums.txt afterwards."""
+DOWNLOAD_BLOCK_SIZE = 2 * 1024 * 1024
+
+
+def download(rel, name, destdir, progress=True, expected_sha256=None, retries=4):
+    """Fetch verified assets in small ranges, preserving progress on failure.
+
+    Only a full size AND trusted digest match can promote .part to the cache.
+    Assets without a trusted digest retain the original full-fetch behaviour.
+    """
     if name not in rel.assets:
         raise ReleaseError(f"{rel.tag}: no asset named {name!r}")
+    want = rel.assets[name]["size"]
+    if type(want) is not int or want <= 0:
+        raise ReleaseError(f"{name}: release asset size must be positive")
+    github_digest = api_digest(rel, name)
+    if expected_sha256 and github_digest and expected_sha256 != github_digest:
+        raise ReleaseError(f"{name}: trusted asset digests disagree")
+    digest = expected_sha256 or github_digest
+    if digest and re.fullmatch(r"[0-9a-f]{64}", digest) is None:
+        raise ReleaseError(f"{name}: invalid trusted SHA-256")
     os.makedirs(destdir, exist_ok=True)
     path = os.path.join(destdir, name)
-    want = rel.assets[name]["size"]
-    github_digest = api_digest(rel, name)
     if os.path.exists(path) and os.path.getsize(path) == want:
-        if not github_digest or sha256(path) == github_digest:
+        if not digest or sha256(path) == digest:
             return path
-        print(f"[!] cached {name} failed GitHub's asset digest; downloading again")
-    req = urllib.request.Request(rel.assets[name]["url"])
-    req.add_header("User-Agent", "xiaomi-openwrt-install")
+        print(f"[!] cached {name} failed its trusted digest; downloading again")
     tmp = path + ".part"
-    got = 0
-    with urllib.request.urlopen(req, timeout=60) as r, open(tmp, "wb") as fh:
-        while True:
-            chunk = r.read(262144)
-            if not chunk:
-                break
-            fh.write(chunk)
-            got += len(chunk)
-            if progress and want:
-                pct = 100 * got // want
-                short = name.rsplit("-v2-", 1)[-1]
-                print(f"\r    {short}: {pct:3d}%  {got >> 20}/{want >> 20} MiB",
-                      end="", flush=True)
+    if os.path.exists(tmp) and (not digest or os.path.getsize(tmp) > want):
+        os.unlink(tmp)
+    failures = 0
+    while True:
+        got = os.path.getsize(tmp) if os.path.exists(tmp) else 0
+        if got == want:
+            break
+        req = urllib.request.Request(rel.assets[name]["url"])
+        req.add_header("User-Agent", "xiaomi-openwrt-install")
+        req.add_header("Accept-Encoding", "identity")
+        req.add_header("Connection", "close")
+        end = min(got + DOWNLOAD_BLOCK_SIZE, want) - 1
+        if digest:
+            req.add_header("Range", f"bytes={got}-{end}")
+        try:
+            with urllib.request.urlopen(req, timeout=60) as response:
+                if response.status == 206:
+                    match = re.fullmatch(r"bytes (\d+)-(\d+)/(\d+)",
+                                         response.headers.get("Content-Range", ""))
+                    if (not digest or not match
+                            or tuple(map(int, match.groups())) != (got, end, want)):
+                        raise ReleaseError(f"{name}: invalid Content-Range; partial data not appended")
+                    stop = end + 1
+                elif response.status == 200:
+                    # A server can ignore Range. Its full response must replace,
+                    # never append to, a previous prefix.
+                    if got:
+                        print(f"[!] {name}: server ignored Range; restarting this file")
+                    got, stop = 0, want
+                else:
+                    raise ReleaseError(f"{name}: unexpected HTTP status {response.status}")
+                encoding = response.headers.get("Content-Encoding", "identity").lower()
+                if encoding != "identity":
+                    raise ReleaseError(f"{name}: unexpected encoded asset response")
+                with open(tmp, "ab" if got else "wb") as output:
+                    while got < stop:
+                        chunk = response.read(min(262144, stop-got))
+                        if not chunk:
+                            raise OSError(f"response ended at {got} B, expected {stop} B")
+                        if len(chunk) > stop-got:
+                            raise ReleaseError(f"{name}: response exceeds its declared range")
+                        output.write(chunk)
+                        got += len(chunk)
+                        if progress:
+                            short = name.rsplit("-v2-", 1)[-1]
+                            print(f"\r    {short}: {100*got//want:3d}%  {got >> 20}/{want >> 20} MiB",
+                                  end="", flush=True)
+        except urllib.error.HTTPError as exc:
+            if exc.code not in (408, 429, 500, 502, 503, 504):
+                raise ReleaseError(f"{name}: HTTP {exc.code}; partial download retained") from exc
+            error = exc
+        except (OSError, urllib.error.URLError, http.client.HTTPException) as exc:
+            error = exc
+        else:
+            continue
+        failures += 1
+        saved = os.path.getsize(tmp) if os.path.exists(tmp) else 0
+        if progress:
+            print()
+        if failures > retries:
+            raise ReleaseError(
+                f"{name}: download interrupted after {failures} failures; "
+                f"{saved}/{want} B retained in .part; rerun to resume ({error})") from error
+        print(f"[!] {name}: connection interrupted; {saved}/{want} B retained; "
+              f"retry {failures}/{retries}")
+        time.sleep(min(failures, 3))
     if progress:
         print()
-    if want and got != want:
+    if os.path.getsize(tmp) != want:
+        raise ReleaseError(f"{name}: partial download length changed; refusing cache promotion")
+    if digest and sha256(tmp) != digest:
         os.unlink(tmp)
-        raise ReleaseError(f"{name}: got {got} B, release says {want}")
-    if github_digest:
-        got_digest = sha256(tmp)
-        if got_digest != github_digest:
-            os.unlink(tmp)
-            raise ReleaseError(
-                f"{name}: downloaded sha256 {got_digest}, GitHub records "
-                f"{github_digest}")
+        raise ReleaseError(f"{name}: downloaded SHA-256 differs from trusted digest; partial file removed")
     os.replace(tmp, path)
     return path
 
@@ -343,7 +404,7 @@ def get_images(rel, destdir, flavour="default", kinds=("initramfs_ubi", "sysupgr
             raise ReleaseError(
                 f"{rel.tag} provides no trusted SHA-256 for {name}; refusing "
                 "to use a length-only download")
-        path = download(rel, name, cachedir)
+        path = download(rel, name, cachedir, expected_sha256=want)
         digest = sha256(path)
         if want and digest != want:
             raise ReleaseError(

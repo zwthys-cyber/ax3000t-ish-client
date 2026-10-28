@@ -4,7 +4,7 @@
   "upstream_commit": "2ca24a165a54f11af98cdea1ba8f4fef69c97ec1",
   "software_tests": {
     "adapter": {
-      "passed": 41,
+      "passed": 50,
       "failed": 0
     },
     "upstream_selftest": {
@@ -19,7 +19,7 @@
     "python": "3.9.16",
     "openssh": "8.6p1",
     "openssl": "1.1.1t",
-    "adapter_tests_passed": 41
+    "adapter_tests_passed": 50
   },
   "real_dry_run": {
     "backend": "ish",
@@ -37,14 +37,25 @@
     "IPv4 stock management",
     "local listener binds",
     "IPv6 unicast HTTP with numeric scope",
-    "IPv4 and IPv6 stock IDs match"
+    "IPv4 and IPv6 stock IDs match",
+    "v0.1.0 read-only runtime and atomic resume storage",
+    "v0.1.0 adapter model tests: 41 passed on iSH"
   ],
   "phone_not_verified": [
-    "new client runtime and filesystem checks",
+    "new ranged downloader on iSH; previous full-stream downloads truncated twice",
     "SSH to RAM system",
     "router-to-phone root callback",
     "real NAND installation",
     "iOS suspension/resume during install"
   ],
-  "current_phone_step": "ish_preflight.py --runtime only; no reset or flashing"
+  "current_phone_step": "update release.py and rerun the pinned v2.0.2 dry-run; no router writes",
+  "client_version": "ish-client-v0.1.1",
+  "real_range_download": {
+    "environment": "matching Alpine 3.14 x86 chroot, Python 3.9.16; not actual iSH",
+    "release": "v2.0.2",
+    "asset": "initramfs-factory-wifi.ubi",
+    "bytes": 17432576,
+    "sha256": "dfae1071e315497244f713074598d51e1f0f8e5b28c4183004d76cb4cad3c85f",
+    "verified": true
+  }
 }

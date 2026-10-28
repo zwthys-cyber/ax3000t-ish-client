@@ -78,7 +78,7 @@ revert.py / restore.py 尚未适配 iSH，此包不宣称支持在 iPhone 上恢
 ## 软件验证范围
 
 已在宿主机与 Alpine 3.14 x86、同一 iSH 仓库快照提供的 Python 3.9.16 / OpenSSH 8.6p1
-上运行 41 项适配测试，均通过。测试覆盖路由与身份拒绝、接口变化、ART 核对、旧 SCP、
+上运行 50 项适配测试，均通过。测试覆盖路由与身份拒绝、接口变化、ART 核对、旧 SCP、
 原子阶段保存、掉线后续接、拒绝重复触发，以及模拟 RAM → 永久系统的协调和验证。
 上游 selftest 在宿主机重新运行：259 通过，0 失败，1 跳过（缺少原厂镜像输入）。
 
@@ -92,5 +92,15 @@ revert.py / restore.py 尚未适配 iSH，此包不宣称支持在 iPhone 上恢
 本机测试入口：
 
 ```sh
-python3 -m unittest -q test_ish_network test_ish_backend
+python3 -m unittest -q test_download_resume test_ish_network test_ish_backend
 ```
+
+## v0.1.1 下载修复
+
+固件下载改为 2 MiB HTTP Range 请求；短读取或临时网络错误后保留 .part，最多自动重试四次，
+重新运行可继续已有进度。服务器忽略 Range 时从头替换该文件，绝不把完整响应追加到旧前缀。
+Content-Range 的起止位置和总长度必须吻合；完整长度与可信 SHA-256 都通过后才进入正式缓存。
+没有可信摘要的旧辅助资产仍使用完整下载；不允许凭文件大小跳过固件哈希验证。
+
+手机已通过 v0.1.0 的 41 项测试和只读运行环境/状态持久化检查。新增的 9 项真实本地 HTTP
+下载测试在宿主机和匹配的旧版 Alpine 环境通过，新下载器尚需手机 dry-run 验证。

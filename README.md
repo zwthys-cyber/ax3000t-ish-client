@@ -32,14 +32,14 @@ python3 ish_preflight.py --runtime --stock-ipv6 'fe80::1%24'
 
 ## 软件验证
 
-- 41 项适配和中断恢复测试通过；在 Alpine 3.14 x86 / Python 3.9.16 / OpenSSH 8.6p1 上也通过。
+- 50 项适配和中断恢复测试通过；在 Alpine 3.14 x86 / Python 3.9.16 / OpenSSH 8.6p1 上也通过。
 - 上游 selftest：259 通过、0 失败、1 跳过（缺少原厂镜像输入）。
 - 同一旧版 Alpine 环境完成了 iSH 模式真实 dry-run，下载并校验 v2.0.2 的三个镜像及 UBI/ITB 对应关系；未接触路由器。
 
 详情见 [ISH_VALIDATION.json](ISH_VALIDATION.json)。Alpine chroot 测试不等于 iOS 或 iSH 实机测试。
 
 ```sh
-python3 -m unittest -q test_ish_network test_ish_backend
+python3 -m unittest -q test_download_resume test_ish_network test_ish_backend
 ```
 
 [上游 README](README.upstream.md)、[NOTICE](NOTICE) 与 [GPL-2.0 许可证](LICENSE) 保留。
