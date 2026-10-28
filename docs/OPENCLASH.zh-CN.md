@@ -1,10 +1,12 @@
-# RD03v2 v2.0.2：OpenClash 安装、低内存与 DNS 排错
+# 小米 AX3000T RD03v2：安装 OpenClash 和解决常见问题
 
 [返回首页](../README.md) · [刷机与联网](GUIDE.zh-CN.md) · [附件、源码与哈希](ARTIFACTS.zh-CN.md)
 
-本文是 OpenWrt SNAPSHOT `r0+37778-bc808b8504`、内核 `6.18.55`、OpenClash `0.48.002` 的实测记录。SNAPSHOT 软件源会变化，不能保证未来的最新包仍与旧固件兼容。**不要执行全系统 `apk upgrade`，也不要强制绕过内核依赖。**
+这份教程记录了在本次路由器上安装 OpenClash 的步骤，包括安装失败、页面打不开、内存不足和网页打开慢的处理办法。
 
-## 1. 先确认登录的是路由器
+本次版本是 OpenWrt SNAPSHOT `r0+37778-bc808b8504`、内核 `6.18.55`、OpenClash `0.48.002`。SNAPSHOT 是持续更新的系统版本，下载软件的服务器内容也会变化，新包不一定适合旧固件。**不要直接升级全系统的软件包，也不要强制忽略依赖错误。**
+
+## 1. 先从手机登录路由器
 
 在手机 iSH：
 
@@ -22,29 +24,33 @@ df -h /overlay /tmp
 free
 ```
 
-本次系统可见总内存约 170.7 MiB，安装前可用约 35 MiB；overlay 约 58.6 MiB。`/tmp` 是内存文件系统，显示有空间不代表能同时容纳下载、解压和内核运行。`free` 的数字需按实际输出单位判断，不能因为输入了 `-m` 就把所有数字当 MiB。
+本次系统可使用的总内存约 170.7 MiB，安装前剩余可用内存约 35 MiB。`/overlay` 是存放新增软件和设置的空间，约 58.6 MiB。
 
-## 2. 安装依赖，先模拟再安装
+`/tmp` 则使用内存，不是额外的磁盘。下载、解压和运行程序都会占内存，所以它看起来还有空间，也可能运行失败。查看 `free` 时按实际输出单位读数，不能只看输入了 `-m` 就把数字都当成 MiB。
 
-本次以下命令先模拟通过，再执行安装：
+## 2. 安装 OpenClash 需要的软件
+
+OpenClash 需要其他软件配合。先用下面的命令预演安装：`--simulate` 只显示将要做的事，不真正安装。
 
 ```sh
 apk add --simulate bash curl ca-bundle ip-full ruby ruby-yaml \
   kmod-tun kmod-inet-diag unzip kmod-nft-tproxy luci-compat luci luci-base
 ```
 
-确认没有缺包、kernel ABI 冲突或意外删除后，去掉 `--simulate`：
+检查输出：如果提示缺包、内核不匹配，或要删除不相关的重要软件，先停下解决。没有这些问题后，运行实际安装命令：
 
 ```sh
 apk add bash curl ca-bundle ip-full ruby ruby-yaml \
   kmod-tun kmod-inet-diag unzip kmod-nft-tproxy luci-compat luci luci-base
 ```
 
-这只证明本次源状态能解析依赖。未来的软件源若不匹配，应使用固件维护者提供的匹配包或匹配 SDK 重建，不能仅凭 `6.18.55` 数字相同认定所有 kmod 兼容。
+这些软件在本次安装时能够配套，不代表以后下载的所有版本都能用。如果提示不匹配，应找这个固件对应的安装包，或按对应源码重新构建。尤其是 `kmod` 开头的内核模块，不能只看 `6.18.55` 这个数字相同就强行安装。
 
-## 3. dnsmasq-full 冲突如何处理
+## 3. dnsmasq-full 装不上怎么办
 
-本次直接安装源里的 `dnsmasq-full` 失败：原系统固定 `dnsmasq=2.93-r4`，滚动源已经是 `2.93-r6`；其依赖 `libnetfilter-conntrack3` 又要求源中不存在的 `kmod-nf-conntrack-netlink`。
+dnsmasq 负责给连接路由器的设备分配地址，并提供域名查询。OpenClash 的这套用法需要带更多功能的 `dnsmasq-full`。
+
+本次直接安装失败，原因有两个：系统固定使用 `2.93-r4`，下载服务器已经更新到 `2.93-r6`；新包还需要一个服务器里没有的内核模块 `kmod-nf-conntrack-netlink`。下面这些命令可以看清冲突：
 
 检查：
 
@@ -55,7 +61,7 @@ dnsmasq --version
 apk info -a kernel
 ```
 
-原版显示 `no-nftset`。本次为 **v2.0.2 / aarch64_cortex-a53** 构建了保留原补丁 init 的 `dnsmasq-full 2.93-r4`：启用 nftset、DHCPv6、DNSSEC，关闭本例未使用的 conntrack 与 ipset。这样无需伪造或强装缺失 kmod。源码、构建配置和 APK 在[本次附件发布](https://github.com/zwthys-cyber/ax3000t-ish-client/releases/tag/rd03v2-guide-20261028)。
+原程序显示 `no-nftset`，表示没有本例需要的 nftset 功能。因此为 **v2.0.2 / aarch64_cortex-a53** 单独编译了 `dnsmasq-full 2.93-r4`：保留原来的服务启动修复，打开所需功能，关掉本例不需要、又会引入缺包的 conntrack 和 ipset 功能。这样不用强装缺失的内核模块。安装包、对应源码和构建说明在[补丁下载页](https://github.com/zwthys-cyber/ax3000t-ish-client/releases/tag/rd03v2-guide-20261028)。
 
 确认自己版本与[适用范围](ARTIFACTS.zh-CN.md)匹配，再下载并验证：
 
@@ -81,7 +87,9 @@ dnsmasq --version
 /etc/init.d/dnsmasq restart
 ```
 
-`--allow-untrusted` 只用于这一个自编译包，不要全局关闭签名验证。输出中的 `no-conntrack no-ipset nftset` 是本补丁的预期特性。保留现有 `/etc/config/dhcp`；安装出现 `.apk-new` 不意味着要用它覆盖现有 LAN 设置。
+这个包是自行编译的，没有原固件作者的签名，所以只在安装这个文件时使用 `--allow-untrusted`。仍要先核对 SHA-256，不要关闭整个系统的签名检查。
+
+版本输出中的 `no-conntrack no-ipset nftset` 正是本补丁的设置。保留当前 `/etc/config/dhcp`；安装时生成的 `.apk-new` 是另一份配置文件，不要直接拿它覆盖正在使用的 LAN 设置。
 
 重启后等几秒再验证：
 
@@ -105,9 +113,9 @@ apk add --allow-untrusted /tmp/openclash.apk
 
 安装后应出现“服务 → OpenClash”。下载和安装必须完成才刷新界面。
 
-## 5. 没有“服务”菜单或访问 OpenClash 404
+## 5. 没有“服务”菜单，或 OpenClash 页面显示 404
 
-本次控制器文件存在，但 Lua 桥接无法加载：
+本次插件文件明明已安装，页面还是打不开。检查后发现，网页需要的 Lua 支持组件没能加载。先看文件和报错：
 
 ```sh
 ls -l /etc/config/openclash /usr/lib/lua/luci/controller/openclash.lua
@@ -122,9 +130,9 @@ Error relocating /usr/lib/ucode/lua.so: ucv_metamethod_lookup: symbol not found
 Lua controller ... present but no Lua runtime installed.
 ```
 
-原因是旧固件 `ucode 2026.07.09` 与后来安装的 `ucode-mod-lua 2026.10.23` ABI 不匹配，不是简单缺一个控制器文件。仅清浏览器缓存无法修复。
+原因是两个配套组件版本不一致：固件自带的 `ucode` 是 2026.07.09，后来装入的 `ucode-mod-lua` 是 2026.10.23，新组件找不到旧程序中对应的功能。这类兼容问题叫 ABI 不匹配，清浏览器缓存解决不了。
 
-本次对整组 ucode 组件进行一致版本的定向升级，先模拟检查：
+解决办法是只更新这一组相关组件，让它们用上相互匹配的版本，不是把全系统都升级。先预演安装：
 
 ```sh
 apk add --simulate --upgrade \
@@ -155,9 +163,11 @@ rm -f /tmp/luci-indexcache
 
 重新登录页面。仍失败先看服务日志，不反复重装 OpenClash。
 
-## 6. Meta 内核下载成功但安装失败：本次是 OOM
+## 6. 内核下完了却安装失败：检查是不是内存不够
 
-本次内核下载 100%、校验成功，却提示 `Core Update Failed`。路由器诊断：
+这里的“Meta 内核”是 OpenClash 实际处理连接的程序，也叫 Mihomo，和路由器系统的 Linux 内核不是同一个东西。
+
+本次下载进度已到 100%，文件检查也通过了，但仍提示 `Core Update Failed`。先在路由器上看日志和可用空间：
 
 ```sh
 tail -n 40 /tmp/openclash.log
@@ -166,9 +176,9 @@ df -h /overlay /tmp
 free
 ```
 
-日志明确显示 `Out of memory: Killed process ... (clash_meta.new.)`。不是下载源无效，也不是换协议能解决。反复点更新会继续耗内存。
+日志里的 `Out of memory: Killed process ... (clash_meta.new.)` 说明内存不够，系统把新程序结束了。OOM 就是“内存不足”的缩写。这种情况下反复点下载或换节点协议，解决不了安装时的内存占用。
 
-本次解决办法是在**外部电脑/服务器**把官方 ARM64 内核的 UPX 包装解开，再直接传到路由器持久存储，避免路由器执行压缩版本时的额外内存峰值。不能在本就缺内存的路由器上做解包。
+本次使用的官方程序经过 UPX 压缩。压缩版文件较小，但启动时会额外占用内存。解决办法是在**另一台电脑或服务器**先解开这层压缩，再把程序传到路由器里。不要让已经缺内存的路由器自己做解包。
 
 来源为 OpenClash 官方 core 分支 `meta/clash-linux-arm64.tar.gz`。本次版本是 `alpha-gbc76c13`，编译目标在界面选择 `linux-arm64(armv8)`，Smart 内核关闭。官方原始 URL 是滚动内容，后来下载的文件不保证仍是这个版本。
 
@@ -217,7 +227,7 @@ GOMEMLIMIT=24MiB GOGC=20 /etc/openclash/core/clash_meta -v
 
 本次输出正确 Mihomo 版本。这里的 Go 环境变量**只作用于这一条 `-v` 检查，不代表 OpenClash 服务已持久设置内存上限，也不是进程硬性内存限制**。本次服务实际运行 RSS 约 24 MiB，但配置规则、连接与数据库都会影响占用。避免后续自动更新把已解包文件换回压缩内核；需要更新时重新核对来源、空间及运行结果。
 
-## 7. 导入自己的 Mihomo 配置
+## 7. 添加你自己的节点配置
 
 可参考[脱敏的配置结构模板](../examples/mihomo.example.yaml)。模板含 `REPLACE_*` 占位符，
 必须替换为自己的服务端参数；这里只验证 YAML 结构，没有将占位模板当作可连接的实机配置。
@@ -239,11 +249,13 @@ ruby -e 'require "yaml"; YAML.load_file(ARGV[0]); puts "YAML syntax OK"' /etc/op
 
 本次先选“增强”运行模式、“规则”代理模式，选定配置再启动。运行状态应显示 **Meta 运行中**。进入 Metacubexd 控制面板，在选择代理组中先选一个具体节点，观察连接与延迟；排错时固定节点更便于前后比较。
 
-## 8. 能打开但等待很久：本次修复 DNS 遵循规则
+## 8. 网页能打开，但每次都等很久怎么办
 
-本次 YAML 原本含 `dns.respect-rules: true`，但 OpenClash 全局设置 `openclash.config.enable_respect_rules=0` 又把它覆盖为 false。境外 DoH `1.1.1.1` / `8.8.8.8` 直接访问反复约 5 秒超时；同样的 DNS 请求走现有代理只需约 0.61 秒。
+DNS 的作用是把网站名称查成服务器地址。这次访问慢，就是查询地址时卡住了。
 
-这是本次定位到的原因，不表示所有慢速都来自 DNS。先检查当前值和日志：
+节点配置里原本打开了“DNS 遵循规则”（`dns.respect-rules: true`），但 OpenClash 的总设置又把它关掉了：`openclash.config.enable_respect_rules=0`。结果查询 `1.1.1.1` / `8.8.8.8` 这些加密 DNS 服务时没有走预期的代理路径，每次等约 5 秒后超时；改用已有代理发送同样查询，只需约 0.61 秒。
+
+这是这次找到的具体原因，其他慢速问题仍要看实际情况。先查看当前设置和日志：
 
 ```sh
 uci -q get openclash.config.enable_respect_rules
@@ -260,7 +272,7 @@ uci commit openclash
 /etc/init.d/openclash restart
 ```
 
-需要独立可达的 `proxy-server-nameserver` 给代理节点域名解析，避免启动时 DNS 与代理互相依赖。本次已有 `https://223.5.5.5/dns-query` 与 `https://doh.pub/dns-query`；实际规则还须允许相应连接走到可用路径。不能只改一个开关而不检查自己的 DNS 和代理规则。
+还要给“节点服务器的地址查询”留一条能用的路径，配置项叫 `proxy-server-nameserver`。否则可能出现“要连代理先查地址，要查地址又必须先连代理”的循环。本次配置中已有 `https://223.5.5.5/dns-query` 和 `https://doh.pub/dns-query`。你的配置也要结合自己的规则检查，不能只照改一个开关。
 
 重启会中断现有连接，也可能把代理组重新选到配置首项。本次恢复为重启前同一个 Hysteria2 节点后，才做对照：
 
@@ -281,6 +293,6 @@ cp -p /root/openclash-before-dns.conf /etc/config/openclash
 
 不要拿别人的 UCI 全量配置覆盖自己的网络或节点信息。
 
-## 9. 结束与保存
+## 9. 确认能正常使用，保存自己的配置
 
 确认普通网页、目标服务、LAN DNS 与手机实际访问都正常后，私下保存路由器配置备份。保留 ART、原厂环境、resume 等原始备份；公开发布仅保留脱敏摘要。本次诊断使用的临时远程连接、授权和密钥均已撤销，教程不提供长期公网 SSH 或控制面板暴露方案。

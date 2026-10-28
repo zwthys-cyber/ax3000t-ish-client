@@ -1,3 +1,9 @@
+# 原作者的项目说明
+
+下面保留刷机工具原作者的英文说明，用于了解来源和原版功能。新手请先看本仓库的[中文首页](README.md)和[手机刷机教程](docs/GUIDE.zh-CN.md)。原版说明中的电脑操作和恢复原厂验证，不表示本仓库已经在 iPhone 上完成同样验证。
+
+---
+
 # xiaomi-openwrt-install
 
 Install OpenWrt on a supported Xiaomi router without UART or soldering, or

@@ -1,3 +1,9 @@
+# 程序内部的技术说明
+
+下面是原作者保留的英文技术资料，主要讲存储布局、内部实现和高级恢复命令。普通用户刷机不需要逐段阅读，先看[中文刷机教程](GUIDE.zh-CN.md)；看不懂缩写时查[术语解释](TERMS.zh-CN.md)。这里的电脑命令和验证记录不能直接当成 iPhone 操作步骤，本仓库尚未完整验证 iSH 恢复原厂流程。
+
+---
+
 # `xiaomi-openwrt-install` technical reference
 
 This document preserves the implementation details, recovery commands, flash
